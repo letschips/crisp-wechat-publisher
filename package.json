@@ -1,0 +1,36 @@
+{
+  "name": "crisp-wechat-publisher",
+  "version": "0.1.0",
+  "description": "WeChat Markdown Publisher for Obsidian based on doocs/md",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "typecheck": "tsc --noEmit",
+    "test": "node esbuild.test.mjs && node --test .test-dist/*.test.cjs"
+  },
+  "keywords": [
+    "obsidian",
+    "wechat",
+    "doocs",
+    "markdown",
+    "publisher",
+    "image-upload"
+  ],
+  "author": "letschips",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "latest",
+    "tslib": "^2.8.1",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "entities": "^6.0.0",
+    "highlight.js": "^11.11.1",
+    "juice": "^11.0.0",
+    "katex": "^0.16.21",
+    "marked": "^15.0.7"
+  }
+}

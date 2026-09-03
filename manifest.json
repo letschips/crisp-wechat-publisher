@@ -1,0 +1,10 @@
+{
+  "id": "crisp-wechat-publisher",
+  "name": "Crisp WeChat Publisher",
+  "version": "0.1.0",
+  "minAppVersion": "1.5.0",
+  "description": "微信公众号排版与图床发布插件。基于 doocs/md 渲染引擎，自动识别本地图片/Wikilink 并上传图床，一键生成并复制微信公众号兼容富文本。",
+  "author": "letschips",
+  "authorUrl": "https://github.com/letschips",
+  "isDesktopOnly": false
+}

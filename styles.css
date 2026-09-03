@@ -1,0 +1,529 @@
+/* ==========================================================================
+   Crisp WeChat Publisher — Apple / Crisp Visual Aesthetic CSS
+   ========================================================================== */
+
+/* ==================== Modal Layout & Container ==================== */
+
+.modal-container .modal.cwp-preview-modal,
+.modal.cwp-preview-modal {
+  width: 94vw !important;
+  max-width: 1200px !important;
+  height: 90vh !important;
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  background: var(--background-secondary) !important;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.modal-container .modal.cwp-preview-modal .modal-content,
+.modal.cwp-preview-modal .modal-content {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  margin-top: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* ==================== Modal Header Bar (Glassmorphic) ==================== */
+
+.cwp-modal-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 44px 10px 18px;
+  margin: 0 !important;
+  border-top: none !important;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 10;
+  user-select: none;
+}
+
+.cwp-modal-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: var(--text-normal);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cwp-modal-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cwp-modal-close {
+  min-width: 44px;
+}
+
+.cwp-stat-text {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  background: var(--background-modifier-form-field);
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  letter-spacing: -0.1px;
+}
+
+/* ==================== Apple / Crisp Style Buttons ==================== */
+
+.cwp-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 12px;
+  background: #07c160 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(7, 193, 96, 0.3), 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.cwp-btn-primary:hover {
+  background: #06ad56 !important;
+  box-shadow: 0 2px 6px rgba(7, 193, 96, 0.4);
+  transform: translateY(-0.5px);
+}
+
+.cwp-btn-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.cwp-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  background: var(--interactive-normal);
+  color: var(--text-normal);
+  border: none !important;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.cwp-btn-secondary:hover {
+  background: var(--interactive-hover);
+  color: var(--text-normal);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.cwp-btn-secondary.is-active-btn {
+  background: rgba(var(--interactive-accent-rgb), 0.15) !important;
+  color: var(--interactive-accent) !important;
+  box-shadow: none !important;
+}
+
+.cwp-btn-primary:disabled,
+.cwp-btn-secondary:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
+}
+
+.cwp-btn-primary:focus-visible,
+.cwp-btn-secondary:focus-visible,
+.cwp-segmented-item:focus-visible,
+.cwp-color-chip:focus-visible,
+.cwp-leaf-select:focus-visible,
+.cwp-hex-input:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 2px;
+}
+
+/* ==================== Split Body & Canvas Area ==================== */
+
+.cwp-modal-split-body {
+  flex: 1 1 auto;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+  background: var(--background-primary-alt);
+}
+
+.cwp-preview-body {
+  flex: 1 1 auto;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  padding: 24px 20px 48px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 0 !important;
+  background: radial-gradient(circle at 50% 10%, rgba(var(--interactive-accent-rgb), 0.03), transparent 60%);
+}
+
+/* ==================== Mobile Phone Bezel (iPhone 16 Pro Style) ==================== */
+
+.cwp-phone-container {
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  color: #3f3f3f;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18), 0 3px 12px rgba(0, 0, 0, 0.06);
+  border-radius: 32px;
+  border: 7px solid #1e1e20;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
+  transition: all 0.2s ease;
+}
+
+.cwp-phone-notch {
+  flex-shrink: 0;
+  background: #fafafa;
+  padding: 11px 20px 9px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #444444;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+  user-select: none;
+  letter-spacing: -0.1px;
+}
+
+.cwp-phone-content {
+  padding: 22px 18px 48px;
+  background: #ffffff;
+  font-family: -apple-system-font, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei", Arial, sans-serif;
+  line-height: 1.75;
+  color: #333333;
+  word-break: break-word;
+  transition: all 0.2s ease;
+}
+
+/* ==================== Right: Style Inspector Panel ==================== */
+
+.cwp-modal-inspector {
+  width: 310px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  overflow-y: auto;
+  padding: 16px 14px 32px;
+  min-height: 0;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.02);
+}
+
+.cwp-inspector-section {
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.cwp-inspector-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.cwp-inspector-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Recessed Segmented Capsule Controls (Crisp Apple Style) */
+.cwp-segmented {
+  display: flex;
+  background: var(--interactive-normal);
+  border: none !important;
+  border-radius: 7px;
+  padding: 2px;
+  gap: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.cwp-segmented-item {
+  flex: 1;
+  background: transparent;
+  border: none !important;
+  border-radius: 5px;
+  padding: 4px 6px;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+}
+
+.cwp-segmented-item:hover {
+  color: var(--text-normal);
+}
+
+.cwp-segmented-item.is-active {
+  background: var(--background-primary) !important;
+  color: var(--text-normal) !important;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+}
+
+/* ==================== Color Matrix (11 Curated Chips) ==================== */
+
+.cwp-color-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.cwp-color-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.cwp-color-chip:hover {
+  border-color: var(--interactive-accent);
+  transform: translateY(-0.5px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.cwp-color-chip.is-active {
+  border-color: var(--interactive-accent);
+  background: rgba(var(--interactive-accent-rgb), 0.08);
+  font-weight: 600;
+  box-shadow: 0 0 0 1px var(--interactive-accent);
+}
+
+.cwp-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.cwp-color-name {
+  font-size: 11px;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.1px;
+}
+
+.cwp-custom-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  padding: 2px 0;
+}
+
+.cwp-custom-color-row input[type="color"] {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 5px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.cwp-hex-input {
+  width: 76px !important;
+  font-size: 11px !important;
+  padding: 2px 6px !important;
+  height: 22px !important;
+  border-radius: 5px !important;
+  font-family: monospace;
+  background: var(--background-modifier-form-field) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+}
+
+.cwp-hex-input:focus {
+  border-color: var(--interactive-accent) !important;
+}
+
+/* ==================== Toggle Rows ==================== */
+
+.cwp-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 12px;
+  color: var(--text-normal);
+  user-select: none;
+}
+
+.cwp-toggle-row input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--interactive-accent);
+}
+
+/* ==================== Sidebar Leaf View ==================== */
+
+.cwp-leaf-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 8px;
+  background: var(--background-primary);
+  min-height: 0;
+}
+
+.cwp-leaf-toolbar {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  gap: 6px;
+}
+
+.cwp-leaf-select {
+  height: 26px;
+  padding: 2px 8px;
+  background: var(--interactive-normal);
+  border: none !important;
+  border-radius: 6px;
+  color: var(--text-normal);
+  font-size: 11.5px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s ease;
+}
+
+.cwp-leaf-select:hover {
+  background: var(--interactive-hover);
+}
+
+.cwp-leaf-content {
+  flex: 1 1 auto;
+  overflow-y: auto !important;
+  background: #ffffff;
+  color: #333333;
+  padding: 20px 18px 40px;
+  border-radius: 12px;
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  min-height: 0;
+  transition: all 0.2s ease;
+}
+
+/* The article canvas stays light in dark Obsidian themes so the preview matches WeChat. */
+.theme-dark .cwp-phone-container,
+.theme-dark .cwp-leaf-content {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.42);
+}
+
+@media (max-width: 760px) {
+  .modal-container .modal.cwp-preview-modal,
+  .modal.cwp-preview-modal {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+  }
+
+  .cwp-modal-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .cwp-modal-controls {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .cwp-stat-text {
+    margin-right: auto;
+  }
+
+  .cwp-modal-split-body {
+    flex-direction: column;
+  }
+
+  .cwp-preview-body {
+    padding: 14px 10px 28px;
+  }
+
+  .cwp-phone-container {
+    border-width: 4px;
+    border-radius: 24px;
+  }
+
+  .cwp-modal-inspector {
+    width: 100%;
+    max-height: 42%;
+    border-left: none;
+    border-top: 1px solid var(--background-modifier-border);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cwp-btn-primary,
+  .cwp-btn-secondary,
+  .cwp-segmented-item,
+  .cwp-color-chip,
+  .cwp-phone-container,
+  .cwp-phone-content,
+  .cwp-leaf-content {
+    transition: none !important;
+  }
+}
