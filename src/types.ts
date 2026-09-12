@@ -108,8 +108,19 @@ export interface PluginSettings {
   qiniu: QiniuConfig;
   github: GitHubConfig;
 
+  // 图片压缩配置 (防微信 10M 限制)
+  imageCompress: ImageCompressConfig;
+
   // 上传缓存哈希表 (md5 -> cdnUrl)
   uploadedCache: Record<string, string>;
+}
+
+export interface ImageCompressConfig {
+  enabled: boolean;
+  maxWidth: number;
+  quality: number;
+  format: 'auto' | 'jpeg' | 'png';
+  minSizeKB: number;
 }
 
 export const DEFAULT_SETTINGS: PluginSettings = {
@@ -165,6 +176,14 @@ export const DEFAULT_SETTINGS: PluginSettings = {
     branch: 'main',
     pathPrefix: 'images',
     customCdn: 'https://fastly.jsdelivr.net/gh/',
+  },
+
+  imageCompress: {
+    enabled: true,
+    maxWidth: 1600,
+    quality: 0.88,
+    format: 'auto',
+    minSizeKB: 200,
   },
 
   uploadedCache: {},

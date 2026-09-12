@@ -2,6 +2,7 @@ import { App, TFile, Notice } from 'obsidian';
 import type { PluginSettings } from '../types';
 import type { ImageUploader } from '../uploader';
 import { getMarkdownProtectedRanges, isIndexInRanges } from '../core/markdown-context';
+import { compressImage } from './image-compressor';
 
 export interface ImageReference {
   rawMatch: string;
@@ -130,6 +131,15 @@ export function findTargetTFile(app: App, linkPath: string, sourcePath: string):
   return null;
 }
 
+export interface ResolveImagesResult {
+  processedMarkdown: string;
+  uploadedCount: number;
+  cachedCount: number;
+  compressedCount: number;
+  bytesSaved: number;
+  totalBytes: number;
+}
+
 export async function resolveAndUploadImages(
   markdown: string,
   sourcePath: string,
@@ -138,16 +148,26 @@ export async function resolveAndUploadImages(
   uploader: ImageUploader,
   saveSettings: () => Promise<void>,
   options: ImageResolutionOptions = {}
-): Promise<{ processedMarkdown: string; uploadedCount: number; cachedCount: number }> {
+): Promise<ResolveImagesResult> {
   const images = extractImages(markdown);
 
   if (images.length === 0) {
-    return { processedMarkdown: markdown, uploadedCount: 0, cachedCount: 0 };
+    return {
+      processedMarkdown: markdown,
+      uploadedCount: 0,
+      cachedCount: 0,
+      compressedCount: 0,
+      bytesSaved: 0,
+      totalBytes: 0,
+    };
   }
 
   let processedMarkdown = markdown;
   let uploadedCount = 0;
   let cachedCount = 0;
+  let compressedCount = 0;
+  let bytesSaved = 0;
+  let totalBytes = 0;
   let cacheModified = false;
   const cacheEnabled = settings.uploaderType !== 'none' && settings.uploaderType !== 'base64';
   const cacheNamespace = getUploadCacheNamespace(settings);
@@ -164,15 +184,38 @@ export async function resolveAndUploadImages(
       let cdnUrl = options.localResourceUrl?.(targetFile);
 
       if (!cdnUrl) {
-        const buffer = await app.vault.readBinary(targetFile);
-        const hash = await computeBufferSHA256(buffer);
+        const rawBuffer = await app.vault.readBinary(targetFile);
+        let bufferToUpload = rawBuffer;
+        let uploadFileName = targetFile.name;
+
+        // 智能图片无损/高质量压缩处理 (防微信 10M 限制)
+        if (settings.imageCompress?.enabled) {
+          const compResult = await compressImage(targetFile.name, rawBuffer, settings.imageCompress);
+          if (compResult.isCompressed) {
+            bufferToUpload = compResult.buffer;
+            compressedCount++;
+            bytesSaved += Math.max(0, compResult.originalSize - compResult.compressedSize);
+
+            // 如果转成了 JPEG，同步更新文件名扩展名为 .jpg，确保所有图床与 Base64 正确识别 MIME 类型
+            if (
+              compResult.mimeType === 'image/jpeg' &&
+              !uploadFileName.toLowerCase().endsWith('.jpg') &&
+              !uploadFileName.toLowerCase().endsWith('.jpeg')
+            ) {
+              uploadFileName = `${targetFile.basename}.jpg`;
+            }
+          }
+        }
+        totalBytes += bufferToUpload.byteLength;
+
+        const hash = await computeBufferSHA256(bufferToUpload);
         const cacheKey = `${cacheNamespace}:${hash}`;
         cdnUrl = cacheEnabled ? settings.uploadedCache[cacheKey] : undefined;
 
         if (cdnUrl) {
           cachedCount++;
         } else {
-          cdnUrl = await uploader.upload(targetFile.name, buffer);
+          cdnUrl = await uploader.upload(uploadFileName, bufferToUpload);
           if (cacheEnabled) {
             settings.uploadedCache[cacheKey] = cdnUrl;
             // Remove legacy, destination-agnostic entries when encountered.
@@ -203,22 +246,34 @@ export async function resolveAndUploadImages(
     await saveSettings();
   }
 
-  return { processedMarkdown, uploadedCount, cachedCount };
+  return { processedMarkdown, uploadedCount, cachedCount, compressedCount, bytesSaved, totalBytes };
 }
 
 function getUploadCacheNamespace(settings: PluginSettings): string {
+  const compKey = settings.imageCompress?.enabled
+    ? `c_${settings.imageCompress.maxWidth}_${settings.imageCompress.quality}_${settings.imageCompress.format}`
+    : 'c_raw';
+
+  let base = 'base64';
   switch (settings.uploaderType) {
     case 's3':
-      return `s3:${settings.s3.endpoint}:${settings.s3.bucket}:${settings.s3.customDomain || ''}:${settings.s3.pathPrefix || ''}`;
+      base = `s3:${settings.s3.endpoint}:${settings.s3.bucket}:${settings.s3.customDomain || ''}:${settings.s3.pathPrefix || ''}`;
+      break;
     case 'oss':
-      return `oss:${settings.oss.region}:${settings.oss.bucket}:${settings.oss.customDomain || ''}:${settings.oss.pathPrefix || ''}`;
+      base = `oss:${settings.oss.region}:${settings.oss.bucket}:${settings.oss.customDomain || ''}:${settings.oss.pathPrefix || ''}`;
+      break;
     case 'cos':
-      return `cos:${settings.cos.region}:${settings.cos.bucket}:${settings.cos.customDomain || ''}:${settings.cos.pathPrefix || ''}`;
+      base = `cos:${settings.cos.region}:${settings.cos.bucket}:${settings.cos.customDomain || ''}:${settings.cos.pathPrefix || ''}`;
+      break;
     case 'qiniu':
-      return `qiniu:${settings.qiniu.bucket}:${settings.qiniu.domain}:${settings.qiniu.pathPrefix || ''}`;
+      base = `qiniu:${settings.qiniu.bucket}:${settings.qiniu.domain}:${settings.qiniu.pathPrefix || ''}`;
+      break;
     case 'github':
-      return `github:${settings.github.repo}:${settings.github.branch}:${settings.github.customCdn || ''}:${settings.github.pathPrefix || ''}`;
+      base = `github:${settings.github.repo}:${settings.github.branch}:${settings.github.customCdn || ''}:${settings.github.pathPrefix || ''}`;
+      break;
     default:
-      return 'base64';
+      base = 'base64';
+      break;
   }
+  return `${base}:${compKey}`;
 }

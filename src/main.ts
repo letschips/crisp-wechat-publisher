@@ -128,6 +128,7 @@ export class CrispWechatPlugin extends Plugin {
       cos: { ...DEFAULT_SETTINGS.cos, ...(saved?.cos || {}) },
       qiniu: { ...DEFAULT_SETTINGS.qiniu, ...(saved?.qiniu || {}) },
       github: { ...DEFAULT_SETTINGS.github, ...(saved?.github || {}) },
+      imageCompress: { ...DEFAULT_SETTINGS.imageCompress, ...(saved?.imageCompress || {}) },
       uploadedCache: { ...(saved?.uploadedCache || {}) },
     };
   }
@@ -161,14 +162,15 @@ export class CrispWechatPlugin extends Plugin {
       // 2. Resolve & Upload Images
       notice.setMessage('⏳ 正在解析并上传本地图片…');
       const uploader = createImageUploader(this.settings);
-      const { processedMarkdown, uploadedCount, cachedCount } = await resolveAndUploadImages(
-        transformed.content,
-        activeFile.path,
-        this.app,
-        activeSettings,
-        uploader,
-        () => this.saveSettings()
-      );
+      const { processedMarkdown, uploadedCount, cachedCount, compressedCount, bytesSaved, totalBytes } =
+        await resolveAndUploadImages(
+          transformed.content,
+          activeFile.path,
+          this.app,
+          activeSettings,
+          uploader,
+          () => this.saveSettings()
+        );
 
       // 3. Render Markdown & Footnotes
       notice.setMessage('⏳ 正在进行微信样式渲染与 CSS 内联…');
@@ -191,8 +193,13 @@ export class CrispWechatPlugin extends Plugin {
       notice.hide();
 
       let statMsg = '🎉 微信公众号排版已复制到剪贴板！';
+      if (compressedCount > 0 && bytesSaved > 0) {
+        const savedMB = (bytesSaved / (1024 * 1024)).toFixed(1);
+        const totalMB = (totalBytes / (1024 * 1024)).toFixed(1);
+        statMsg += `\n📦 已智能无损压缩 ${compressedCount} 张图片 (立省 ${savedMB}MB，最终体积 ${totalMB}MB，安全符合微信 10M 规范)`;
+      }
       if (uploadedCount > 0 || cachedCount > 0) {
-        statMsg += ` (新上传 ${uploadedCount} 张图片，复用 ${cachedCount} 张缓存)`;
+        statMsg += `\n☁️ 新上传 ${uploadedCount} 张图片，复用 ${cachedCount} 张缓存`;
       }
       statMsg += '\n👉 直接在公众号编辑器按 Cmd+V / Ctrl+V 粘贴即可。';
       new Notice(statMsg, 6000);

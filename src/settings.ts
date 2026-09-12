@@ -321,6 +321,81 @@ export class CrispWechatSettingTab extends PluginSettingTab {
       this.addTestUploadButton(containerEl);
     }
 
+    // ==================== 图片压缩设置 ====================
+    containerEl.createEl('h3', { text: '🖼️ 图片无损压缩设置 (防微信 10M 限制)' });
+    containerEl.createEl('p', {
+      text: '微信公众号单篇图文限制素材总大小不得超过 10MB。本功能在复制排版或上传前，自动对大图进行等比缩放与视觉无损压缩，将多张数兆截图骤降至几百 KB，彻底解决超限问题。',
+      cls: 'setting-item-description',
+    });
+
+    new Setting(containerEl)
+      .setName('启用图片智能压缩')
+      .setDesc('开启后，在复制排版到公众号或上传图床前，自动对大图进行无损/高质量压缩（默认开启）')
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.imageCompress.enabled).onChange(async (val) => {
+          this.plugin.settings.imageCompress.enabled = val;
+          await this.plugin.saveSettings();
+        })
+      );
+
+    new Setting(containerEl)
+      .setName('图片最大宽度 (px)')
+      .setDesc('超过此宽度的超高分大图（如 4K/5K Mac 视网膜截图）将等比缩小。微信文章宽度上限 677px，1600px 可达 2.4x 超视网膜清晰度。设为 0 则不缩小尺寸。')
+      .addText((text) =>
+        text
+          .setPlaceholder('1600')
+          .setValue(String(this.plugin.settings.imageCompress.maxWidth))
+          .onChange(async (val) => {
+            const num = parseInt(val, 10);
+            this.plugin.settings.imageCompress.maxWidth = isNaN(num) ? 1600 : Math.max(0, num);
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName('压缩质量')
+      .setDesc('输出图像编码质量。推荐 0.88，在此档位下人眼完全无法察觉画质差异，同时体积降低 80%~95%')
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption('0.92', '0.92 (超高清 · 细节优先)')
+          .addOption('0.88', '0.88 (推荐标准 · 视觉无损)')
+          .addOption('0.82', '0.82 (均衡型 · 配图极多时推荐)')
+          .addOption('0.75', '0.75 (强力压缩 · 超大长图保底)')
+          .setValue(String(this.plugin.settings.imageCompress.quality))
+          .onChange(async (val) => {
+            this.plugin.settings.imageCompress.quality = parseFloat(val);
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName('压缩策略')
+      .setDesc('推荐智能转换：将无透明要求的 PNG 大截图转换为高质量 JPEG 并补齐白底，极大缩减体积；GIF 动图与矢量图严格保持原样')
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption('auto', '智能转换 (大图转高质量 JPEG，体积最小，推荐)')
+          .addOption('keep', '保持原格式 (PNG 仅缩放尺寸，JPEG 重新优化)')
+          .setValue(this.plugin.settings.imageCompress.format)
+          .onChange(async (val) => {
+            this.plugin.settings.imageCompress.format = val as 'auto' | 'jpeg' | 'png';
+            await this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName('压缩触发体积阈值 (KB)')
+      .setDesc('仅对体积大于此阈值的图片进行压缩。小于此阈值的小图标、徽章将直接保留原图')
+      .addText((text) =>
+        text
+          .setPlaceholder('200')
+          .setValue(String(this.plugin.settings.imageCompress.minSizeKB))
+          .onChange(async (val) => {
+            const num = parseInt(val, 10);
+            this.plugin.settings.imageCompress.minSizeKB = isNaN(num) ? 200 : Math.max(0, num);
+            await this.plugin.saveSettings();
+          })
+      );
+
     // Cache management
     containerEl.createEl('h3', { text: '⚡ 缓存与优化' });
     const cacheCount = Object.keys(this.plugin.settings.uploadedCache).length;
