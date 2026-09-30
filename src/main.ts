@@ -9,7 +9,7 @@
  * an open-source WeChat Markdown editor released under the WTFPL license.
  */
 
-import { App, Plugin, Notice, TFile, Menu } from 'obsidian';
+import { App, Plugin, Notice, TFile, Menu, addIcon } from 'obsidian';
 import { PluginSettings, DEFAULT_SETTINGS } from './types';
 import { CrispWechatSettingTab } from './settings';
 import { transformObsidianSyntax } from './preprocessor/obsidian-syntax';
@@ -19,12 +19,21 @@ import { parseAndRenderMarkdown } from './core/renderer';
 import { inlineWechatCSS, RenderOverrides } from './core/juice-inliner';
 import { WechatPreviewModal } from './ui/preview-modal';
 import { WechatPreviewView, WECHAT_PREVIEW_VIEW_TYPE } from './ui/preview-view';
+import { CRISP_WECHAT_ICON_ID, CRISP_WECHAT_SVG } from './ui/icons';
 
 export class CrispWechatPlugin extends Plugin {
   settings: PluginSettings = DEFAULT_SETTINGS;
 
   async onload() {
     await this.loadSettings();
+
+    // 0. Register Custom Icon
+    try {
+      addIcon(CRISP_WECHAT_ICON_ID, CRISP_WECHAT_SVG);
+      addIcon('crisp-wechat-publisher', CRISP_WECHAT_SVG);
+    } catch (e) {
+      console.warn('[Crisp WeChat] Failed to register custom icon:', e);
+    }
 
     // 1. Register Setting Tab
     this.addSettingTab(new CrispWechatSettingTab(this.app, this));
@@ -39,7 +48,7 @@ export class CrispWechatPlugin extends Plugin {
     );
 
     // 3. Register Ribbon Icon
-    this.addRibbonIcon('smartphone', 'Crisp WeChat: 微信公众号排版', (evt: MouseEvent) => {
+    this.addRibbonIcon(CRISP_WECHAT_ICON_ID, 'Crisp WeChat: 微信公众号排版', (evt: MouseEvent) => {
       const menu = new Menu();
 
       menu.addItem((item) =>

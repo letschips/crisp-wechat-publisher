@@ -1,6 +1,7 @@
 import juice from 'juice';
 import type { PluginSettings, ThemeName } from '../types';
 import { BASE_CSS, getThemeCSS } from './themes';
+import { KATEX_CSS } from './katex-css';
 
 export interface RenderOverrides {
   theme?: ThemeName;
@@ -39,6 +40,7 @@ export function inlineWechatCSS(
   let mergedCss = `
 ${BASE_CSS}
 ${themeCss}
+${KATEX_CSS}
 ${extraRules}
 ${settings.customCSS || ''}
 `;

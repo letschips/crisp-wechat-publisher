@@ -5,6 +5,7 @@ import { parseAndRenderMarkdown } from '../core/renderer';
 import { transformObsidianSyntax } from '../preprocessor/obsidian-syntax';
 import { resolveAndUploadImages } from '../preprocessor/image-resolver';
 import { createImageUploader } from '../uploader';
+import { CRISP_WECHAT_ICON_ID } from './icons';
 
 export const WECHAT_PREVIEW_VIEW_TYPE = 'crisp-wechat-preview-view';
 
@@ -49,7 +50,7 @@ export class WechatPreviewView extends ItemView {
   }
 
   getIcon(): string {
-    return 'smartphone';
+    return CRISP_WECHAT_ICON_ID;
   }
 
   async onOpen() {

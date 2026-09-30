@@ -231,6 +231,18 @@
   transition: all 0.2s ease;
 }
 
+.cwp-phone-content .katex-block {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cwp-phone-content .katex-display {
+  margin: 0.8em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+
 /* ==================== Right: Style Inspector Panel ==================== */
 
 .cwp-modal-inspector {

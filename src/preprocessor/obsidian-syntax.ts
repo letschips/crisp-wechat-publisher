@@ -41,7 +41,23 @@ export function parseFrontmatter(markdown: string): { frontmatter: Record<string
 export function transformObsidianSyntax(markdown: string): PreprocessResult {
   const { frontmatter, content: rawContent } = parseFrontmatter(markdown);
 
-  const protectedCode = protectMarkdownCode(rawContent);
+  // 0. Transform component code blocks (```slider, ```expand, ```stat, ```toc) into callout syntax
+  const componentBlockRegex = /^ {0,3}```(slider|carousel|swiper|gallery|expand|details|collapse|fold|stat|stats|number|highlight|toc|guide|outline)[ \t]*(.*)\r?\n([\s\S]*?)\r?\n {0,3}```$/gim;
+  const normalizedRaw = rawContent.replace(componentBlockRegex, (_match, rawType, title, inner) => {
+    const typeLower = rawType.toLowerCase();
+    let calloutType = 'SLIDER';
+    if (['expand', 'details', 'collapse', 'fold'].includes(typeLower)) calloutType = 'EXPAND';
+    else if (['stat', 'stats', 'number', 'highlight'].includes(typeLower)) calloutType = 'STAT';
+    else if (['toc', 'guide', 'outline'].includes(typeLower)) calloutType = 'TOC';
+
+    const cleanTitle = title ? title.trim() : '';
+    const header = cleanTitle ? `> [!${calloutType}] ${cleanTitle}` : `> [!${calloutType}]`;
+    const lines = inner.split(/\r?\n/).map((line: string) => `> ${line}`);
+    return `${header}\n${lines.join('\n')}`;
+  });
+
+
+  const protectedCode = protectMarkdownCode(normalizedRaw);
   let content = protectedCode.content;
 
   // 1. Remove Obsidian Comments: %% comment %%

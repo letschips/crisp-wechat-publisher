@@ -1,6 +1,6 @@
 {
   "name": "crisp-wechat-publisher",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "WeChat Markdown Publisher for Obsidian based on doocs/md",
   "main": "main.js",
   "scripts": {

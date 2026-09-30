@@ -85,3 +85,16 @@ citeStatus: false
   assert.match(writtenHtml, /href="https:\/\/openai\.com"/);
   assert.doesNotMatch(writtenHtml, /引用链接与参考资料/);
 });
+
+test('plugin registers custom svg icon and uses it for preview view and ribbon', async () => {
+  const { CRISP_WECHAT_ICON_ID, CRISP_WECHAT_SVG } = await import('../src/ui/icons');
+  const { WechatPreviewView } = await import('../src/ui/preview-view');
+
+  assert.equal(CRISP_WECHAT_ICON_ID, 'crisp-wechat');
+  assert.match(CRISP_WECHAT_SVG, /viewBox="0 0 24 24"/);
+  assert.match(CRISP_WECHAT_SVG, /<path/);
+
+  const view = Object.create(WechatPreviewView.prototype) as WechatPreviewView;
+  assert.equal(view.getIcon(), CRISP_WECHAT_ICON_ID);
+});
+

@@ -18,6 +18,7 @@ export class WechatPreviewModal extends Modal {
   private isUseIndent: boolean;
   private isUseJustify: boolean;
   private isInspectorOpen: boolean = true;
+  private isShowSafeArea: boolean = false;
 
   private previewEl!: HTMLElement;
   private statEl!: HTMLElement;
@@ -115,6 +116,26 @@ export class WechatPreviewModal extends Modal {
         this.inspectorEl.style.display = this.isInspectorOpen ? 'block' : 'none';
       }
     });
+
+    // Toggle 1:1 Cover Safe Area Button
+    const safeAreaBtn = controls.createEl('button', {
+      cls: `cwp-btn-secondary ${this.isShowSafeArea ? 'is-active-btn' : ''}`,
+    });
+    safeAreaBtn.setText('🛡️ 1:1 封面安全区');
+    safeAreaBtn.title = '在头图上显示朋友圈与会话卡片 1:1 居中裁剪参考线';
+    safeAreaBtn.addEventListener('click', () => {
+      this.isShowSafeArea = !this.isShowSafeArea;
+      safeAreaBtn.toggleClass('is-active-btn', this.isShowSafeArea);
+      if (this.isShowSafeArea) {
+        safeAreaBtn.style.color = 'var(--text-accent)';
+        safeAreaBtn.style.borderColor = 'var(--interactive-accent)';
+      } else {
+        safeAreaBtn.style.color = '';
+        safeAreaBtn.style.borderColor = '';
+      }
+      this.applySafeAreaOverlay();
+    });
+
 
     // Copy Button (Primary Green)
     const copyBtn = controls.createEl('button', { cls: 'cwp-btn-primary' });
@@ -324,7 +345,64 @@ export class WechatPreviewModal extends Modal {
     const charCount = plainText.replace(/\s+/g, '').length;
     const readMinutes = Math.max(1, Math.round(charCount / 400));
     this.statEl.setText(`约 ${charCount} 字 · ${readMinutes} 分钟读完`);
+
+    this.applySafeAreaOverlay();
   }
+
+  private applySafeAreaOverlay() {
+    const existing = this.previewEl.querySelectorAll('.cwp-safe-area-overlay');
+    existing.forEach((el) => el.remove());
+
+    if (!this.isShowSafeArea) return;
+
+    // Find the first image in previewEl
+    const firstImg = this.previewEl.querySelector('img') as HTMLImageElement | null;
+    if (!firstImg) return;
+
+    const wrapper = firstImg.closest('figure') || firstImg.parentElement;
+    if (!wrapper) return;
+
+    wrapper.style.position = 'relative';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'cwp-safe-area-overlay';
+    overlay.style.cssText = `
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      aspect-ratio: 1 / 1;
+      height: 100%;
+      max-width: 100%;
+      border: 2px dashed #07c160;
+      background: rgba(7, 193, 96, 0.12);
+      pointer-events: none;
+      box-sizing: border-box;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+      z-index: 10;
+    `;
+
+    const badge = document.createElement('span');
+    badge.style.cssText = `
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.75);
+      color: #ffffff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      font-weight: 500;
+      white-space: nowrap;
+    `;
+    badge.innerText = '🛡️ 1:1 分享卡片裁剪区';
+    overlay.appendChild(badge);
+
+    wrapper.appendChild(overlay);
+  }
+
 
   private async writebackToFrontmatter(btn: HTMLButtonElement) {
     if (!this.activeFile) return;

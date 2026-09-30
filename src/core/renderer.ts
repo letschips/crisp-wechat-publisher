@@ -13,7 +13,16 @@ import { Marked, Renderer as MarkedRenderer } from 'marked';
 import hljs from 'highlight.js';
 import katex from 'katex';
 import type { PluginSettings } from '../types';
-import { FootnoteItem, buildFootnotesHtml, formatImage, formatMacCodeBlock } from './wechat-dom';
+import {
+  FootnoteItem,
+  buildFootnotesHtml,
+  formatImage,
+  formatMacCodeBlock,
+  formatWechatSlider,
+  formatWechatDetails,
+  formatWechatStat,
+  formatWechatToc,
+} from './wechat-dom';
 
 export interface RenderResult {
   html: string;
@@ -44,7 +53,10 @@ const CALLOUT_ICONS: Record<string, { icon: string; title: string; color: string
   cite: { icon: '💬', title: 'Cite', color: '#4b5563', bg: '#f9fafb' },
 };
 
-export function createWechatRenderer(settings: PluginSettings): { marked: Marked; getFootnotes: () => FootnoteItem[] } {
+export function createWechatRenderer(
+  settings: PluginSettings,
+  documentHeadings: string[] = []
+): { marked: Marked; getFootnotes: () => FootnoteItem[] } {
   const footnotes: FootnoteItem[] = [];
   let footnoteCounter = 0;
 
@@ -70,7 +82,7 @@ export function createWechatRenderer(settings: PluginSettings): { marked: Marked
       return formatMacCodeBlock(highlighted, language);
     }
 
-    return `<pre class="code__pre" style="margin: 1.5em 0; padding: 14px 16px; background: #282c34; color: #abb2bf; border-radius: 8px; overflow-x: auto;"><code class="hljs ${language}">${highlighted}</code></pre>`;
+    return `<pre class="code__pre" style="margin: 1.5em 0; padding: 14px 16px; background: #282c34; color: #abb2bf; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-break: break-all;"><code class="hljs ${language}">${highlighted}</code></pre>`;
   };
 
   // 2. Custom Image Renderer
@@ -109,6 +121,40 @@ export function createWechatRenderer(settings: PluginSettings): { marked: Marked
       const type = match[1].toLowerCase();
       const customTitle = match[2].trim();
       let body = match[3].trim();
+
+      if (['slider', 'carousel', 'swiper', 'gallery'].includes(type)) {
+        return renderWechatSliderBlock(body, customTitle, marked);
+      }
+
+      if (['expand', 'collapse', 'details', 'fold'].includes(type)) {
+        const cleanBody = body.replace(/<\/p>\s*$/i, '').trim();
+        const contentHtml = (marked.parse(cleanBody) as string).trim();
+        return formatWechatDetails(customTitle, contentHtml);
+      }
+
+      if (['stat', 'stats', 'number', 'highlight'].includes(type)) {
+        const cleanBody = body.replace(/<\/p>\s*$/i, '').trim();
+        let numStr = customTitle;
+        let lblStr = '';
+        const sepMatch = customTitle.match(/\s*[|｜/]\s*/);
+        if (sepMatch && sepMatch.index !== undefined) {
+          numStr = customTitle.slice(0, sepMatch.index).trim();
+          lblStr = customTitle.slice(sepMatch.index + sepMatch[0].length).trim();
+        }
+        const descHtml = (marked.parse(cleanBody) as string).trim();
+        return formatWechatStat(numStr, lblStr, descHtml);
+      }
+
+      if (['toc', 'guide', 'outline'].includes(type)) {
+        const cleanBody = body.replace(/<\/p>\s*$/i, '').trim();
+        let items = cleanBody
+          ? cleanBody.split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
+          : [];
+        if (items.length === 0 && documentHeadings.length > 0) {
+          items = documentHeadings;
+        }
+        return formatWechatToc(customTitle, items);
+      }
 
       const config = CALLOUT_ICONS[type] || {
         icon: 'ℹ️',
@@ -168,7 +214,7 @@ export function createWechatRenderer(settings: PluginSettings): { marked: Marked
     }
 
     return `
-<section class="table-container" style="margin: 1.8em 0; overflow-x: auto;">
+<section class="table-container" data-ignore-width="" style="margin: 1.8em 0; overflow-x: auto;">
   <table style="width: 100%; border-collapse: collapse; border-spacing: 0; margin: 0; font-size: 13.5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);">
     ${headerHtml}
     ${bodyHtml}
@@ -194,7 +240,7 @@ export function parseAndRenderMarkdown(markdown: string, settings: PluginSetting
   // 2. Block math: $$ ... $$
   processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
     try {
-      return `<section class="katex-block" style="text-align: center; margin: 1.5em 0; overflow-x: auto;">${katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false })}</section>`;
+      return `<section class="katex-block" data-ignore-width="" style="text-align: center; margin: 1.5em 0; overflow-x: auto;">${katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false, output: 'html' })}</section>`;
     } catch {
       return match;
     }
@@ -203,23 +249,96 @@ export function parseAndRenderMarkdown(markdown: string, settings: PluginSetting
   // 3. Inline math: $ ... $
   processed = processed.replace(/(?<!\\)\$([^\$\n]+?)\$/g, (match, formula) => {
     try {
-      return `<span class="katex-inline">${katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false })}</span>`;
+      return `<span class="katex-inline">${katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false, output: 'html' })}</span>`;
     } catch {
       return match;
     }
   });
 
-  const { marked, getFootnotes } = createWechatRenderer(settings);
+  // 4. Collect document H2 headings for TOC (strip code blocks to avoid code sample pollution)
+  const documentHeadings: string[] = [];
+  const textWithoutCode = processed
+    .replace(/^ {0,3}```[\s\S]*?```$/gm, '')
+    .replace(/`[^`\n]+`/g, '');
+  const headingLines = textWithoutCode.split(/\r?\n/);
+  for (const line of headingLines) {
+    const h2Match = line.match(/^##\s+(.+)$/);
+    if (h2Match) {
+      const cleanText = h2Match[1]
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .trim();
+      documentHeadings.push(cleanText);
+    }
+  }
+
+  // 5. Expand standalone [TOC] tags via placeholder to prevent marked from parsing inner HTML as indented code blocks
+  let tocCardHtml = '';
+  const tocRegex = /^[ \t]*(?:\[TOC\]|\{:toc\}|<!--\s*toc\s*-->)[ \t]*$/gim;
+  if (tocRegex.test(processed)) {
+    tocCardHtml = formatWechatToc('本文核心脉络', documentHeadings);
+    processed = processed.replace(tocRegex, () => '\n\u0000CWP_TOC_PLACEHOLDER\u0000\n');
+  }
+
+  const { marked, getFootnotes } = createWechatRenderer(settings, documentHeadings);
   const rawHtml = marked.parse(processed) as string;
   const footnotes = getFootnotes();
 
   let finalHtml = rawHtml;
+  if (tocCardHtml) {
+    finalHtml = finalHtml.replace(/<p>\s*\u0000CWP_TOC_PLACEHOLDER\u0000\s*<\/p>/g, tocCardHtml);
+    finalHtml = finalHtml.split('\u0000CWP_TOC_PLACEHOLDER\u0000').join(tocCardHtml);
+  }
+
   if (footnotes.length > 0) {
     finalHtml += buildFootnotesHtml(footnotes);
   }
+
 
   return {
     html: finalHtml,
     footnotes,
   };
 }
+
+function renderWechatSliderBlock(body: string, hintText: string, markedInstance: Marked): string {
+  const cleanBody = body.replace(/<\/p>\s*$/i, '').trim();
+
+  // 1. Check for explicit slide separators: ---, ***, ___, or <!-- slide -->
+  const sepRegex = /(?:^|\n)[ \t]*(?:---|___|\*\*\*|<!--\s*slide\s*-->)[ \t]*(?:\n|$)/i;
+  let slideRawParts: string[] = [];
+
+  if (sepRegex.test(cleanBody)) {
+    slideRawParts = cleanBody.split(sepRegex).map((s) => s.trim()).filter(Boolean);
+  } else {
+    // 2. Split by individual images (markdown, html, or figure)
+    const lines = cleanBody.split(/\r?\n/);
+    let currentSlide: string[] = [];
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const isNewImage = /^(!\[|<img|<figure)/i.test(trimmed);
+      if (isNewImage && currentSlide.length > 0) {
+        slideRawParts.push(currentSlide.join('\n').trim());
+        currentSlide = [line];
+      } else {
+        currentSlide.push(line);
+      }
+    }
+    if (currentSlide.length > 0) {
+      const lastChunk = currentSlide.join('\n').trim();
+      if (lastChunk) slideRawParts.push(lastChunk);
+    }
+  }
+
+  if (slideRawParts.length === 0 && cleanBody) {
+    slideRawParts = [cleanBody];
+  }
+
+  const slidesHtml = slideRawParts.map((raw) => {
+    return (markedInstance.parse(raw) as string).trim();
+  });
+
+  return formatWechatSlider(slidesHtml, hintText);
+}
+

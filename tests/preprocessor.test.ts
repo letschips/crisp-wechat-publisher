@@ -182,3 +182,32 @@ test('commented-out images are not uploaded', () => {
 
   assert.deepEqual(extractImages(markdown).map((image) => image.linkPath), ['real.png']);
 });
+
+test('code block slider is transformed into callout slider syntax', () => {
+  const markdown = `\`\`\`slider 向左滑动查看
+![[img1.png]]
+![[img2.png]]
+\`\`\``;
+
+  const result = transformObsidianSyntax(markdown);
+  assert.match(result.content, /> \[!SLIDER\] 向左滑动查看/);
+  assert.match(result.content, /> !\[\[img1\.png\]\]/);
+  assert.match(result.content, /> !\[\[img2\.png\]\]/);
+});
+
+test('code block expand and stat are transformed into callout syntax', () => {
+  const mdExpand = `\`\`\`expand 查看详细配置
+echo "test"
+\`\`\``;
+  const resExpand = transformObsidianSyntax(mdExpand);
+  assert.match(resExpand.content, /> \[!EXPAND\] 查看详细配置/);
+  assert.match(resExpand.content, /> echo "test"/);
+
+  const mdStat = `\`\`\`stat 2.6倍 | 正确补丁量
+说明文字
+\`\`\``;
+  const resStat = transformObsidianSyntax(mdStat);
+  assert.match(resStat.content, /> \[!STAT\] 2.6倍 | 正确补丁量/);
+  assert.match(resStat.content, /> 说明文字/);
+});
+

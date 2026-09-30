@@ -29,3 +29,6 @@ export class Plugin {
 export function requestUrl(): never {
   throw new Error('Network requests are unavailable in unit tests');
 }
+
+export function addIcon(_iconId: string, _svgContent: string): void {}
+
