@@ -169,15 +169,31 @@ test('stat card supports fullwidth bar and slash separators', () => {
   assert.match(html2, /class="wechat-stat-label"[^>]*>\s*百万Token\s*<\/div>/);
 });
 
-test('math formulas render without MathML or raw LaTeX leaks', () => {
-  const formula = String.raw`$$\text{意图} \xrightarrow{\text{搜索}} \text{候选}$$`;
+test('math formulas render as self-contained SVG that survives WeChat paste', () => {
+  const formula = String.raw`$$\text{Intelligence} \times \text{Context} \xrightarrow{\text{搜索}} \text{Autonomy}$$
+
+行内 $N \times M$ 公式`;
   const { html } = parseAndRenderMarkdown(formula, DEFAULT_SETTINGS);
   const inlinedHtml = inlineWechatCSS(html, DEFAULT_SETTINGS);
 
-  assert.doesNotMatch(inlinedHtml, /<annotation/);
-  assert.doesNotMatch(inlinedHtml, /katex-mathml/);
-  assert.match(inlinedHtml, /class="katex-html"/);
-  assert.match(inlinedHtml, /overflow:\s*hidden/);
+  assert.doesNotMatch(inlinedHtml, /katex|<annotation|<math|mjx-container|<use\b/);
+  const svgs = inlinedHtml.match(/class="math-(?:block|inline)"[^>]*><svg\b[^>]*>/g) || [];
+  assert.equal(svgs.length, 2);
+  for (const svg of svgs) {
+    assert.match(svg, /viewBox="/);
+    assert.match(svg, /max-width:\s*100%/);
+  }
+  assert.match(inlinedHtml, /fill="currentColor"/);
+  assert.match(inlinedHtml, /<section class="math-block"[^>]*text-align:\s*center/);
+  assert.match(inlinedHtml, /<span class="math-inline"/);
+});
+
+test('dollar signs inside code are not rendered as math', () => {
+  const md = '`echo $HOME $PATH`\n\n```sh\necho $HOME and $PATH\n```';
+  const { html } = parseAndRenderMarkdown(md, DEFAULT_SETTINGS);
+  assert.doesNotMatch(html, /<svg/);
+  assert.match(html, /\$HOME \$PATH/);
+  assert.match(html.replace(/<[^>]+>/g, ''), /echo \$HOME and \$PATH/);
 });
 
 
@@ -202,4 +218,11 @@ test('highlighted code tokens get inline colors that survive WeChat class stripp
   for (const cls of ['hljs-keyword', 'hljs-comment', 'hljs-string']) {
     assert.match(inlinedHtml, new RegExp(`<span class="${cls}"[^>]*style="[^"]*color:\\s*#`), cls);
   }
+});
+
+test('math alphabets that MathJax loads on demand still render offline', () => {
+  const md = String.raw`$$\mathbb{R} \mathcal{L} \mathscr{F} \mathfrak{g} \mathsf{T} \mathtt{x} \ell \checkmark \text{café}$$`;
+  const { html } = parseAndRenderMarkdown(md, DEFAULT_SETTINGS);
+  assert.match(html, /<section class="math-block"[^>]*><svg/);
+  assert.doesNotMatch(html, /\$\$/);
 });

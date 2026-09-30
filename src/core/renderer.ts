@@ -11,8 +11,9 @@
 
 import { Marked, Renderer as MarkedRenderer } from 'marked';
 import hljs from 'highlight.js';
-import katex from 'katex';
 import type { PluginSettings } from '../types';
+import { protectMarkdownCode } from './markdown-context';
+import { renderMathSvg } from './math';
 import {
   FootnoteItem,
   buildFootnotesHtml,
@@ -231,7 +232,9 @@ export function createWechatRenderer(
 }
 
 export function parseAndRenderMarkdown(markdown: string, settings: PluginSettings): RenderResult {
-  let processed = markdown;
+  // Ruby and math syntax must not touch code spans / fenced code (e.g. shell `$HOME`).
+  const guarded = protectMarkdownCode(markdown);
+  let processed = guarded.content;
 
   // 1. Ruby Annotation Parser: [文字]{注音} or [文字]^(注音)
   processed = processed.replace(/\[([^\]]+)\]\{([^}]+)\}/g, '<ruby>$1<rp>(</rp><rt style="font-size: 0.75em; color: var(--md-primary-color);">$2</rt><rp>)</rp></ruby>');
@@ -240,7 +243,7 @@ export function parseAndRenderMarkdown(markdown: string, settings: PluginSetting
   // 2. Block math: $$ ... $$
   processed = processed.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
     try {
-      return `<section class="katex-block" data-ignore-width="" style="text-align: center; margin: 1.5em 0; overflow-x: auto;">${katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false, output: 'html' })}</section>`;
+      return `<section class="math-block" style="text-align: center; margin: 1.5em 0;">${renderMathSvg(formula.trim(), true)}</section>`;
     } catch {
       return match;
     }
@@ -249,11 +252,13 @@ export function parseAndRenderMarkdown(markdown: string, settings: PluginSetting
   // 3. Inline math: $ ... $
   processed = processed.replace(/(?<!\\)\$([^\$\n]+?)\$/g, (match, formula) => {
     try {
-      return `<span class="katex-inline">${katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false, output: 'html' })}</span>`;
+      return `<span class="math-inline">${renderMathSvg(formula.trim(), false)}</span>`;
     } catch {
       return match;
     }
   });
+
+  processed = guarded.restore(processed);
 
   // 4. Collect document H2 headings for TOC (strip code blocks to avoid code sample pollution)
   const documentHeadings: string[] = [];
