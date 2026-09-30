@@ -11,6 +11,7 @@
 
 import { App, Plugin, Notice, TFile, Menu, addIcon } from 'obsidian';
 import { PluginSettings, DEFAULT_SETTINGS } from './types';
+import { preserveUnreadableData, verifyDataWrite } from './data-safety';
 import { CrispWechatSettingTab } from './settings';
 import { transformObsidianSyntax } from './preprocessor/obsidian-syntax';
 import { resolveAndUploadImages } from './preprocessor/image-resolver';
@@ -127,8 +128,26 @@ export class CrispWechatPlugin extends Plugin {
     );
   }
 
+  private dataWriteBlocked = false;
+  private saveErrorShown = false;
+
+  private get dataPath(): string {
+    return `${this.manifest.dir}/data.json`;
+  }
+
   async loadSettings() {
-    const saved = (await this.loadData()) as Partial<PluginSettings> | null;
+    const saved = (await this.loadData()) as Partial<PluginSettings> | null | undefined;
+    if (saved === undefined) {
+      // The file exists but could not be read: keep it (and the image upload cache in it) out of harm's way.
+      const result = await preserveUnreadableData(this.app.vault.adapter, this.dataPath);
+      if (result.state === 'preserved') {
+        new Notice(`Crisp WeChat Publisher 的 data.json 无法读取，已备份为 ${result.backupPath.split('/').pop()}，本次使用默认设置。图床配置需要重新填写，或从备份恢复。`, 12000);
+      } else if (result.state === 'failed') {
+        this.dataWriteBlocked = true;
+        console.error('Crisp WeChat Publisher could not back up unreadable data.json', result.error);
+        new Notice('Crisp WeChat Publisher 的 data.json 无法读取，也无法备份。为保护原文件，本次运行不会保存设置。', 0);
+      }
+    }
     this.settings = {
       ...DEFAULT_SETTINGS,
       ...saved,
@@ -142,8 +161,21 @@ export class CrispWechatPlugin extends Plugin {
     };
   }
 
+  // Never throws: it also persists the upload cache mid-publish, which a failed save must not abort.
   async saveSettings() {
-    await this.saveData(this.settings);
+    if (this.dataWriteBlocked) return;
+    const snapshot = JSON.parse(JSON.stringify(this.settings));
+    try {
+      await this.saveData(snapshot);
+      await verifyDataWrite(this.app.vault.adapter, this.dataPath, snapshot);
+      this.saveErrorShown = false;
+    } catch (error) {
+      console.error('Crisp WeChat Publisher could not save data.json', error);
+      if (!this.saveErrorShown) {
+        this.saveErrorShown = true;
+        new Notice('Crisp WeChat Publisher：设置或图床缓存没有写入磁盘，下次保存时会再试。');
+      }
+    }
   }
 
   /**
