@@ -40,7 +40,9 @@
   background: transparent !important;
 }
 
-/* ==================== Modal Header Bar (Glassmorphic) ==================== */
+/* ==================== Modal Header Bar ==================== */
+/* No backdrop-filter here: in a translucent Obsidian window it samples the empty
+   area behind the window and blacks out everything around the modal. */
 
 .cwp-modal-header {
   flex-shrink: 0;
@@ -52,8 +54,6 @@
   border-top: none !important;
   border-bottom: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   z-index: 10;
   user-select: none;
 }
@@ -282,7 +282,8 @@
 
 .cwp-segmented-item {
   flex: 1;
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none !important;
   border: none !important;
   border-radius: 5px;
   padding: 4px 6px;
@@ -303,7 +304,7 @@
   background: var(--background-primary) !important;
   color: var(--text-normal) !important;
   font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 1px rgba(0, 0, 0, 0.04) !important;
 }
 
 /* ==================== Color Matrix (11 Curated Chips) ==================== */
@@ -321,7 +322,8 @@
   gap: 5px;
   padding: 4px 6px;
   border-radius: 6px;
-  background: var(--background-primary);
+  background: var(--background-primary) !important;
+  box-shadow: none !important;
   border: 1px solid var(--background-modifier-border);
   cursor: pointer;
   transition: all 0.15s ease;
@@ -335,14 +337,14 @@
 .cwp-color-chip:hover {
   border-color: var(--interactive-accent);
   transform: translateY(-0.5px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
 }
 
 .cwp-color-chip.is-active {
   border-color: var(--interactive-accent);
-  background: rgba(var(--interactive-accent-rgb), 0.08);
+  background: rgba(var(--interactive-accent-rgb), 0.08) !important;
   font-weight: 600;
-  box-shadow: 0 0 0 1px var(--interactive-accent);
+  box-shadow: 0 0 0 1px var(--interactive-accent) !important;
 }
 
 .cwp-color-dot {
