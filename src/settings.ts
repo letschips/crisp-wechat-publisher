@@ -1,4 +1,5 @@
-import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice, setIcon } from 'obsidian';
+import { CRISP_WECHAT_ICON_ID } from './ui/icons';
 import type { CrispWechatPlugin } from './main';
 import type { ThemeName, UploaderType } from './types';
 import { createImageUploader } from './uploader';
@@ -15,11 +16,10 @@ export class CrispWechatSettingTab extends PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
 
-    containerEl.createEl('h2', { text: 'Crisp WeChat Publisher 设置' });
-    containerEl.createEl('p', {
-      text: '将 Obsidian 笔记一键排版并发布到微信公众号。基于 doocs/md 渲染引擎，支持多图床自动上传与离线 CSS 内联。',
-      cls: 'setting-item-description',
-    });
+    const brandHeader = containerEl.createDiv({ cls: 'crisp-brand-header' });
+    setIcon(brandHeader.createDiv({ cls: 'crisp-brand-logo' }), CRISP_WECHAT_ICON_ID);
+    brandHeader.createEl('h2', { text: 'Crisp WeChat Publisher' });
+    containerEl.createEl('p', { text: '把笔记排成公众号文章', cls: 'crisp-brand-slogan' });
 
     // ==================== 排版设置 ====================
     containerEl.createEl('h3', { text: '🎨 微信排版与主题设置' });

@@ -32,3 +32,5 @@ export function requestUrl(): never {
 
 export function addIcon(_iconId: string, _svgContent: string): void {}
 
+export function setIcon(_el: HTMLElement, _iconId: string): void {}
+
