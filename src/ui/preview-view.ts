@@ -8,6 +8,8 @@ import { createImageUploader } from '../uploader';
 import { CRISP_WECHAT_ICON_ID } from './icons';
 
 export const WECHAT_PREVIEW_VIEW_TYPE = 'crisp-wechat-preview-view';
+// 0.2.6：一次预览渲染约 40ms（长文 300ms+），打字时停手再渲染，不再每次按键排队重渲染
+export const PREVIEW_LIVE_UPDATE_DELAY_MS = 300;
 
 export class WechatPreviewView extends ItemView {
   private settings: PluginSettings;
@@ -22,6 +24,7 @@ export class WechatPreviewView extends ItemView {
   private debounceTimer: number | null = null;
   private pendingMarkdown: string | null = null;
   private pendingFile: TFile | null = null;
+  private pendingEditor: { getValue(): string } | null = null;
   private isLiveUpdateRunning = false;
   private liveUpdateQueued = false;
   private updateVersion = 0;
@@ -131,17 +134,25 @@ export class WechatPreviewView extends ItemView {
         const activeFile = this.app.workspace.getActiveFile();
         if (!info.file || info.file.path !== activeFile?.path) return;
 
-        this.pendingMarkdown = editor.getValue();
-        this.pendingFile = info.file;
         if (info instanceof MarkdownView) this.sourceView = info;
-
-        if (this.debounceTimer) window.clearTimeout(this.debounceTimer);
-        this.debounceTimer = window.setTimeout(() => {
-          this.debounceTimer = null;
-          void this.flushLiveUpdate();
-        }, 16);
+        this.queueLiveUpdate(editor, info.file);
       })
     );
+  }
+
+  private queueLiveUpdate(editor: { getValue(): string }, file: TFile) {
+    // 按键时只记下编辑器，渲染时才取全文
+    this.pendingEditor = editor;
+    this.pendingFile = file;
+    if (this.debounceTimer) window.clearTimeout(this.debounceTimer);
+    this.debounceTimer = window.setTimeout(() => {
+      this.debounceTimer = null;
+      if (this.pendingEditor) {
+        this.pendingMarkdown = this.pendingEditor.getValue();
+        this.pendingEditor = null;
+      }
+      void this.flushLiveUpdate();
+    }, PREVIEW_LIVE_UPDATE_DELAY_MS);
   }
 
   private async flushLiveUpdate() {
@@ -167,6 +178,11 @@ export class WechatPreviewView extends ItemView {
         if (this.debounceTimer) {
           window.clearTimeout(this.debounceTimer);
           this.debounceTimer = null;
+        }
+        // 渲染期间又打的字：计时器已取消，这里直接取最新全文
+        if (this.pendingEditor) {
+          this.pendingMarkdown = this.pendingEditor.getValue();
+          this.pendingEditor = null;
         }
         void this.flushLiveUpdate();
       }
@@ -349,6 +365,7 @@ export class WechatPreviewView extends ItemView {
     this.updateVersion += 1;
     this.pendingMarkdown = null;
     this.pendingFile = null;
+    this.pendingEditor = null;
     this.liveUpdateQueued = false;
     if (this.debounceTimer) {
       window.clearTimeout(this.debounceTimer);
